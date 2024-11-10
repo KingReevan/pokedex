@@ -224,11 +224,11 @@ class PokemonDashboard:
             img = Image.open(BytesIO(img_data))
             img = img.resize((250, 250))  # You can edit the size of the pokémon's image
             img = ImageTk.PhotoImage(img)
-            frame_width = 20  # Thickness of the golden frame
+            frame_width = 35  # Thickness of the golden frame
 
             # Create a new Frame for the image and stats
             if not hasattr(self, 'image_frame'):
-                self.image_frame = tk.Frame(self.root, bg="#E63462")
+                self.image_frame = tk.Frame(self.root, bg="#9593D9")
                 self.image_frame.grid(row=7, column=0, columnspan=4, pady=10)
 
             # Clear frame and display image with frame
@@ -256,16 +256,27 @@ class PokemonDashboard:
 
             # Display Pokémon stats next to the image
             stats_text = (
-                f"HP: {pokemon_data['HP'].values[0]}\n"
-                f"Attack: {pokemon_data['Attack'].values[0]}\n"
-                f"Defense: {pokemon_data['Defense'].values[0]}\n"
-                f"Sp. Atk: {pokemon_data['Sp. Atk'].values[0]}\n"
-                f"Sp. Def: {pokemon_data['Sp. Def'].values[0]}\n"
-                f"Speed: {pokemon_data['Speed'].values[0]}\n"
-                f"Total: {pokemon_data['Total'].values[0]}"
+                f"\nNAME:  {pokemon_data['Name'].values[0]}\n"
+                f"\nTYPE 1:  {pokemon_data['Type 1'].values[0]}\n"
+                f"TYPE 2:  {pokemon_data['Type 2'].values[0]}\n"
+                f"\nHP:  {pokemon_data['HP'].values[0]}\n"
+                f"ATTACK:  {pokemon_data['Attack'].values[0]}\n"
+                f"DEFENSE:  {pokemon_data['Defense'].values[0]}\n"
+                f"SP. ATK:  {pokemon_data['Sp. Atk'].values[0]}\n"
+                f"SP. DEF:  {pokemon_data['Sp. Def'].values[0]}\n"
+                f"SPEED:  {pokemon_data['Speed'].values[0]}\n"
+                f"\nTOTAL:  {pokemon_data['Total'].values[0]}\n"
             )
-            stats_label = tk.Label(self.image_frame, text=stats_text, font=("Montserrat SemiBold", 14,"bold"),
-                                   bg="#E63462", fg="#FFD700", justify="left")
+            stats_label = tk.Label(
+                self.image_frame,
+                text=stats_text,
+                font=("Montserrat SemiBold", 14, "bold"),
+                bg="#E63462",
+                fg="#FFD700",
+                justify="left",
+                padx=30,  # Horizontal padding
+                pady=5  # Vertical padding
+            )
             stats_label.grid(row=0, column=1, padx=10, sticky="nw")
 
             # Show Spider Plot
