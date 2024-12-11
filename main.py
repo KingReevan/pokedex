@@ -649,16 +649,12 @@ class PokemonDashboard:
             row_num += 1
 
     def open_prediction_window(self):
-        prediction_window = tk.Toplevel(self.root)
-        prediction_window.title("Team Prediction")
-        prediction_window.configure(bg="#9593D9")
-
-        # Base URL for fetching Pokémon images
-        image_base_url = "https://assets.pokemon.com/assets/cms2/img/pokedex/full/{:03}.png"
+        prediction_window = tk.Toplevel(self.root)   # Another window opens
+        prediction_window.title("Team Prediction")   # Name of the new window
+        prediction_window.configure(bg="#9593D9")    # Background color of the new window
 
         # Labels and input fields for Team 1
-        tk.Label(prediction_window, text="Enter Pokedex Numbers for Team 1:").grid(row=0, column=0, columnspan=6,
-                                                                                   pady=10)
+        tk.Label(prediction_window, text="Enter Pokedex Numbers for Team 1:").grid(row=0, column=0, columnspan=6, pady=10)
         team1_entries = [tk.Entry(prediction_window, width=10) for _ in range(6)]
         for i, entry in enumerate(team1_entries):
             entry.grid(row=1, column=i, padx=5, pady=5)
@@ -669,8 +665,7 @@ class PokemonDashboard:
             label.grid(row=2, column=i, padx=5, pady=5)
 
         # Labels and input fields for Team 2
-        tk.Label(prediction_window, text="Enter Pokedex Numbers for Team 2:").grid(row=3, column=0, columnspan=6,
-                                                                                   pady=10)
+        tk.Label(prediction_window, text="Enter Pokedex Numbers for Team 2:").grid(row=3, column=0, columnspan=6, pady=10)
         team2_entries = [tk.Entry(prediction_window, width=10) for _ in range(6)]
         for i, entry in enumerate(team2_entries):
             entry.grid(row=4, column=i, padx=5, pady=5)
@@ -699,19 +694,20 @@ class PokemonDashboard:
 
             if not pokemon_data.empty:
                 # Extracts stats and ensure they're numeric
-                stats = pokemon_data[['HP', 'Attack', 'Defense', 'Sp. Atk', 'Sp. Def', 'Speed']].values.flatten()
+                stats = pokemon_data[['HP', 'Attack', 'Defense', 'Sp. Atk', 'Sp. Def', 'Speed']].values.flatten()  # 12 arrays will be generated at the end. Each array will have the stats of all 12 pokemon.
                 stats = pd.to_numeric(stats, errors='coerce')  # Convert to numeric, setting invalid values to NaN
 
                 # Checks if we have 6 stats and they are all numbers
                 if stats.shape == (6,) and not np.isnan(stats).any():
-                    team_stats.append(stats)
+                    team_stats.append(stats)  # An array of 6 arrays. Each interior array contains the stats of a pokemon.
 
         # If no valid stats are found, it returns zeros
         if len(team_stats) == 0:
             return np.zeros(6)
 
         # Calculate the average of the stats for the team
-        team_avg_stats = np.mean(team_stats, axis=0)
+        team_avg_stats = np.mean(team_stats, axis=0)  # The average of each stat is found. Example: The average of all the HP's, average of all the Attack.... it returns a single array with 6 elements. Each element is a stat.
+        print("Averaging of each stat: ",team_avg_stats)
         return team_avg_stats
 
     def predict_and_update_images(self, team1_entries, team2_entries, team1_image_labels, team2_image_labels, window):
@@ -725,19 +721,21 @@ class PokemonDashboard:
             self.update_pokemon_images(team2_pokedex, team2_image_labels)
 
             # Fetches and finds the average of stats for each team
-            team1_stats = self.calculate_team_stats(team1_pokedex)
-            team2_stats = self.calculate_team_stats(team2_pokedex)
+            team1_stats = self.calculate_team_stats(team1_pokedex)          # An array which contains 6 values. Average of each stat of Team 1 is returned
+            team2_stats = self.calculate_team_stats(team2_pokedex)          # An array which contains 6 values. Average of each stat of Team 2 is returned
 
             # Calculates the type advantages
-            team1_type_advantage = self.calculate_team_type_advantage(team1_pokedex, team2_pokedex)
-            team2_type_advantage = self.calculate_team_type_advantage(team2_pokedex, team1_pokedex)
+            team1_type_advantage = self.calculate_team_type_advantage(team1_pokedex, team2_pokedex)  # A single value which is the average of all type advantages of Team 1 is returned
+            team2_type_advantage = self.calculate_team_type_advantage(team2_pokedex, team1_pokedex)  # A single value which is the average of all type advantages of Team 2 is returned
 
             # Loads the updated model
             model = joblib.load("pokemon_model_with_type.pkl")
 
             # Predicts team strength using averaged stats and type advantage
-            team1_score = model.predict([np.append(team1_stats, team1_type_advantage)])[0]
-            team2_score = model.predict([np.append(team2_stats, team2_type_advantage)])[0]
+            team1_score = model.predict([np.append(team1_stats, team1_type_advantage)])[0]    # Model predicts with average stats array and average type advantage value
+            team2_score = model.predict([np.append(team2_stats, team2_type_advantage)])[0]    # Model predicts with average stats array and average type advantage value
+            # The model.predict() function expects a 2D array as input, where each row corresponds to one "observation". In this case, a team with its stats and type advantage.
+            # Since it's a regression model, the model's learned coefficients and weights are used to compute a prediction value.
 
             # Calculates win percentages
             total_score = team1_score + team2_score
@@ -751,34 +749,17 @@ class PokemonDashboard:
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {e}")
 
-    def calculate_type_advantage(pokemon_type1, pokemon_type2, opponent_type1, opponent_type2):
-        score = 1.0  # Begins with neutral effectiveness
 
-        # Primary type advantage
-        if pokemon_type1 in type_matchup and opponent_type1 in type_matchup[pokemon_type1]:
-            score *= type_matchup[pokemon_type1][opponent_type1]
-        if pokemon_type1 in type_matchup and opponent_type2 in type_matchup[pokemon_type1]:
-            score *= type_matchup[pokemon_type1][opponent_type2]
-
-        # Secondary type advantage (if any)
-        if pokemon_type2 and pokemon_type2 in type_matchup:
-            if opponent_type1 in type_matchup[pokemon_type2]:
-                score *= type_matchup[pokemon_type2][opponent_type1]
-            if opponent_type2 in type_matchup[pokemon_type2]:
-                score *= type_matchup[pokemon_type2][opponent_type2]
-
-        return score
-
-    def calculate_team_type_advantage(self, team_pokedex, opponent_pokedex):
+    def calculate_team_type_advantage(self, team_pokedex, opponent_pokedex): # This function calculates the type advantage of each pokemon in Team 1 with every pokemon of team 2. This means there will be a total of 36 comparisons
         type_advantages = []
-        for pokedex_number in team_pokedex:
-            pokemon = df[df['#'] == pokedex_number].iloc[0]
-            for opponent_number in opponent_pokedex:
-                opponent = df[df['#'] == opponent_number].iloc[0]
-                advantage = calculate_type_advantage(pokemon['Type 1'], pokemon['Type 2'], opponent['Type 1'],
-                                                     opponent['Type 2'])
-                type_advantages.append(advantage)
-        return np.mean(type_advantages)
+        for pokedex_number in team_pokedex: # Iterates through the pokemon in team 1
+            pokemon = df[df['#'] == pokedex_number].iloc[0]  # Selects the specific row in the dataframe
+            for opponent_number in opponent_pokedex:  # Iterates through the pokemon in team 2
+                opponent = df[df['#'] == opponent_number].iloc[0]  # Selects the specific row in the dataframe
+                advantage = calculate_type_advantage(pokemon['Type 1'], pokemon['Type 2'], opponent['Type 1'], opponent['Type 2']) # Calculates type advantage for each pokemon
+                type_advantages.append(advantage)  # Contains 36 values. Combination of all comparisons
+
+        return np.mean(type_advantages) # Mean of all the 36 values is returned
 
     def update_pokemon_images(self, pokedex_numbers, image_labels):
         image_base_url = "https://assets.pokemon.com/assets/cms2/img/pokedex/full/{:03}.png"
@@ -798,7 +779,8 @@ class PokemonDashboard:
                 image_labels[i].config(text="N/A", image="")
 
 
+
 # Driver Code
-root = tk.Tk()
-app = PokemonDashboard(root)
-root.mainloop()
+root = tk.Tk()  # creating the main application window using Tkinter
+app = PokemonDashboard(root)  # Instance of PokemonDashboard that takes Tkinter window as argument
+root.mainloop() # keeps the program alive until the user manually closes the application window (or else it will open and close immediately)
